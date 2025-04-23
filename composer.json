@@ -1,0 +1,32 @@
+{
+    "name": "mansjoer/fonnte",
+    "description": "Integrasi Laravel dengan WhatsApp Fonnte API",
+    "type": "library",
+    "require": {
+        "php": "^8.0",
+        "guzzlehttp/guzzle": "^7.9"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Mansjoer\\Fonnte\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Mansjoer\\Fonnte\\Providers\\FonnteServiceProvider"
+            ],
+            "aliases": {
+                "Fonnte": "Mansjoer\\Fonnte\\Facades\\Fonnte"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "authors": [
+        {
+            "name": "Aditya Ramadhana",
+            "email": "ramabljredit@gmail.com"
+        }
+    ]
+}
