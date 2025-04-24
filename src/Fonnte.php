@@ -9,12 +9,14 @@ use Log;
 class Fonnte
 {
     public $base_url;
-    public $token;
+    public $deviceToken;
+    public $accountToken;
 
     public function __construct()
     {
         $this->base_url = config('fonnte.base_url');
-        $this->token = config('fonnte.token');
+        $this->deviceToken = config('fonnte.device_token');
+        $this->accountToken = config('fonnte.account_token');
     }
 
     public function ping($recipient = null)
@@ -25,6 +27,20 @@ class Fonnte
         return $this->sendMessage($recipient, 'PING');
     }
 
+    public function getDevice()
+    {
+        $endpoint = '/get-devices';
+
+        return $this->requestAccountApi($endpoint);
+    }
+
+    public function myDevice()
+    {
+        $endpoint = '/device';
+
+        return $this->requestAccountApi($endpoint);
+    }
+
     public function validate($recipient)
     {
         if (is_array($recipient)) {
@@ -32,11 +48,11 @@ class Fonnte
         }
 
         $endpoint = '/validate';
-        $param array([
+        $param = [
             'target' => $recipient,
-        ]);
+        ];
 
-        return $this->request($endpoint, $param);
+        return $this->requestDeviceApi($endpoint, $param);
     }
 
     public function sendMessage($recipient, $message, $additional_param = [])
@@ -57,13 +73,51 @@ class Fonnte
             $param['target'] = config('fonnte.fallback_recipient');
         }
 
-        return $this->request($endpoint, $param);
+        return $this->requestDeviceApi($endpoint, $param);
     }
 
-    public function request($endpoint, $param = [])
+    public function requestAccountApi($endpoint, $param = [])
     {
         $response = Http::withHeaders([
-            'Authorization' => $this->token,
+            'Authorization' => $this->accountToken,
+        ])
+            ->withOptions([
+                'verify' => false,
+            ])
+            ->asForm()
+            ->accept('application/json')
+            ->post($this->base_url . $endpoint, $param);
+
+        if (!$response->ok()) {
+            // log
+            $logparam = $param;
+            $logparam['message'] = isset($param['message']) ? (strlen($param['message']) > 20 ? substr($param['message'], 0, 20) . '...' : $param['message']) : null;
+            Log::error("ERROR RESPONSE fonnte", [
+                'endpoint' => $this->base_url . $endpoint,
+                'request' => $logparam,
+                'response' => $response->body(),
+                'status' => $response->status(),
+            ]);
+
+            throw new Exception("Error when connect to fonnte endpoint. Check log for more information");
+        }
+
+        $logparam = $param;
+        $logparam['message'] = isset($param['message']) ? (strlen($param['message']) > 20 ? substr($param['message'], 0, 20) . '...' : $param['message']) : null;
+        Log::info("OK RESPONSE fonnte", [
+            'endpoint' => $this->base_url . $endpoint,
+            'request' => $logparam,
+            'response' => $response->body(),
+            'status' => $response->status(),
+        ]);
+
+        return json_decode($response->body(), true);
+    }
+
+    public function requestDeviceApi($endpoint, $param = [])
+    {
+        $response = Http::withHeaders([
+            'Authorization' => $this->deviceToken,
         ])
             ->withOptions([
                 'verify' => false,
