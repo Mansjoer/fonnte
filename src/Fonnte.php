@@ -25,6 +25,20 @@ class Fonnte
         return $this->sendMessage($recipient, 'PING');
     }
 
+    public function validate($recipient)
+    {
+        if (is_array($recipient)) {
+            $recipient = implode(',', $recipient);
+        }
+
+        $endpoint = '/validate';
+        $param array([
+            'target' => $recipient,
+        ]);
+
+        return $this->request($endpoint, $param);
+    }
+
     public function sendMessage($recipient, $message, $additional_param = [])
     {
         // recipient only accept string by default
